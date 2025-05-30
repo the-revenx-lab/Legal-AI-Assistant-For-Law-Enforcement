@@ -349,5 +349,4 @@ pm2 restart rasa
 
 For development support:
 - GitHub Issues: Report bugs and feature requests
-- Documentation: https://docs.legalai-assistant.org
-- Email: dev-support@legalai-assistant.org 
+- Email: dev- reachirfankhani@gmail.com 
