@@ -367,7 +367,7 @@ def health_check():
 ### Emergency Contacts
 
 Maintain a list of emergency contacts:
-- System Administrator: admin@legal-ai.com
-- Database Administrator: dba@legal-ai.com
-- Security Team: security@legal-ai.com
-- Support Team: support@legal-ai.com 
+- System Administrator: reachirfankhani@gmail.com
+- Database Administrator: reachirfankhani@gmail.com
+- Security Team: reachirfankhani@gmail.com
+- Support Team: reachirfankhani@gmail.com 
