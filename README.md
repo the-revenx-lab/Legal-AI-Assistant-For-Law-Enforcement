@@ -61,14 +61,26 @@ A comprehensive AI-powered system designed to assist law enforcement officers in
 
 ```
 Legal-AI-Assistant-For-Law-Enforcement/
-├── chat/                      # Chatbot MVP
-│   └── mvp_prototype/        # Minimal viable chatbot
-├── fir_management/           # FIR processing system
-├── legal_database/           # Database management
-├── web_interface/            # Web UI components
-├── docs/                     # Documentation
-├── tests/                    # Test suites
-└── utils/                    # Utility scripts
+├── actions/
+│   ├── __init__.py
+│   └── actions.py
+├── data/
+│   ├── nlu.yml
+│   ├── rules.yml
+│   └── stories.yml
+├── static/
+│   ├── css/
+│   ├── js/
+│   └── images/
+├── templates/
+│   ├── login.html
+│   ├── chat.html
+│   └── about.html
+├── config.yml
+├── domain.yml
+├── endpoints.yml
+├── requirements.txt
+└── README.md
 ```
 
 ## 🚀 Getting Started
@@ -82,62 +94,60 @@ Legal-AI-Assistant-For-Law-Enforcement/
 ### Installation
 
 1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/yourusername/Legal-AI-Assistant-For-Law-Enforcement.git
-   cd Legal-AI-Assistant-For-Law-Enforcement
-   ```
+```bash
+git clone https://github.com/the-revenx-lab/Law-Enforcement-AI-Chatbot.git
+cd Law-Enforcement-AI-Chatbot
+```
 
 2. **Set Up Virtual Environment**:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
 3. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
 4. **Configure Environment**:
-   Create `.env` file with:
-   ```env
-   DB_HOST=localhost
-   DB_USER=root
-   DB_PASSWORD=your_password
-   DB_NAME=legal_ai
-   RASA_ACTION_ENDPOINT=http://localhost:5055/webhook
-   ```
+Create `.env` file with:
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=legal_ai
+RASA_ACTION_ENDPOINT=http://localhost:5055/webhook
+```
 
 5. **Initialize Database**:
-   ```bash
-   mysql -u root -p < schema.sql
-   python setup_database.py
-   ```
+```bash
+python populate_database.py
+```
 
 6. **Train AI Model**:
-   ```bash
-   cd chat
-   rasa train
-   ```
+```bash
+rasa train
+```
 
 ### Running the System
 
 Start each component in separate terminals:
 
 1. **Rasa Action Server**:
-   ```bash
-   rasa run actions
-   ```
+```bash
+rasa run actions
+```
 
 2. **Rasa Server**:
-   ```bash
-   rasa run --enable-api --cors "*"
-   ```
+```bash
+rasa run --enable-api --cors "*"
+```
 
 3. **Web Interface**:
-   ```bash
-   python app.py
-   ```
+```bash
+python chat.py
+```
 
 Access the application at `http://localhost:5000`
 
