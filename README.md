@@ -209,7 +209,7 @@ This system is designed as an assistant tool and should not be considered as leg
 - Report bugs: Open an issue
 - Feature requests: Use issue templates
 - Questions: Discussions section
-- Email: support@legalai-assistant.org
+- Email: reachirfankhani@gmail.com
 
 ## 🔄 Updates & Maintenance
 
