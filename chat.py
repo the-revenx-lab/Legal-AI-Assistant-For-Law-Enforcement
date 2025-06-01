@@ -1,5 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import uvicorn
@@ -134,6 +134,30 @@ async def chat_history_page(request: Request):
 @app.get("/about", response_class=HTMLResponse)
 async def about_page(request: Request):
     return templates.TemplateResponse("about.html", {"request": request})
+
+@app.get("/health")
+async def health_check():
+    try:
+        # Test database connection
+        conn = get_chat_db()
+        conn.close()
+        return JSONResponse(
+            content={
+                "status": "healthy",
+                "timestamp": datetime.datetime.now().isoformat(),
+                "database": "connected"
+            },
+            status_code=200
+        )
+    except Exception as e:
+        return JSONResponse(
+            content={
+                "status": "unhealthy",
+                "timestamp": datetime.datetime.now().isoformat(),
+                "error": str(e)
+            },
+            status_code=500
+        )
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
