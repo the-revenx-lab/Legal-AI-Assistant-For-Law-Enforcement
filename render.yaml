@@ -11,11 +11,11 @@ services:
     startCommand: gunicorn chat:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.8.15
+        value: 3.8.10
       - key: PATH
-        value: /opt/python/3.8.15/bin:${PATH}
+        value: /opt/python/3.8.10/bin:${PATH}
       - key: PYTHONPATH
-        value: /opt/python/3.8.15/lib/python3.8/site-packages:${PYTHONPATH}
+        value: /opt/python/3.8.10/lib/python3.8/site-packages:${PYTHONPATH}
       - key: RASA_ACTION_ENDPOINT
         value: https://legal-ai-actions.onrender.com/webhook
       - key: HOST
@@ -37,11 +37,11 @@ services:
     startCommand: rasa run --enable-api --cors "*" --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.8.15
+        value: 3.8.10
       - key: PATH
-        value: /opt/python/3.8.15/bin:${PATH}
+        value: /opt/python/3.8.10/bin:${PATH}
       - key: PYTHONPATH
-        value: /opt/python/3.8.15/lib/python3.8/site-packages:${PYTHONPATH}
+        value: /opt/python/3.8.10/lib/python3.8/site-packages:${PYTHONPATH}
       - key: HOST
         value: 0.0.0.0
 
@@ -57,11 +57,11 @@ services:
     startCommand: rasa run actions --cors "*" --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.8.15
+        value: 3.8.10
       - key: PATH
-        value: /opt/python/3.8.15/bin:${PATH}
+        value: /opt/python/3.8.10/bin:${PATH}
       - key: PYTHONPATH
-        value: /opt/python/3.8.15/lib/python3.8/site-packages:${PYTHONPATH}
+        value: /opt/python/3.8.10/lib/python3.8/site-packages:${PYTHONPATH}
       - key: HOST
         value: 0.0.0.0
 
