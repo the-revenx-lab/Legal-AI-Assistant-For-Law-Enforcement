@@ -3,19 +3,25 @@ services:
   - type: web
     name: legal-ai-web
     env: python
+    pythonVersion: 3.8.15
     buildCommand: pip install -r requirements.txt
-    startCommand: python chat.py
+    startCommand: gunicorn chat:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.8.15
       - key: RASA_ACTION_ENDPOINT
         value: https://legal-ai-actions.onrender.com/webhook
+      - key: HOST
+        value: 0.0.0.0
     healthCheckPath: /health
+    initialDeployHooks:
+      - python migrate_db.py
 
   # Rasa Server
   - type: web
     name: legal-ai-rasa
     env: python
+    pythonVersion: 3.8.15
     buildCommand: |
       pip install -r requirements.txt
       rasa train
@@ -23,16 +29,21 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.8.15
+      - key: HOST
+        value: 0.0.0.0
 
   # Rasa Action Server
   - type: web
     name: legal-ai-actions
     env: python
+    pythonVersion: 3.8.15
     buildCommand: pip install -r requirements.txt
     startCommand: rasa run actions --cors "*" --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.8.15
+      - key: HOST
+        value: 0.0.0.0
 
 databases:
   - name: legal-ai-db
