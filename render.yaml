@@ -3,15 +3,19 @@ services:
   - type: web
     name: legal-ai-web
     env: python
-    runtime: python3.8
-    pythonVersion: 3.8.15
+    plan: free
     buildCommand: |
-      python -m pip install --upgrade pip
+      python -V
+      pip install --upgrade pip
       pip install -r requirements.txt
     startCommand: gunicorn chat:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.8.15
+      - key: PATH
+        value: /opt/python/3.8.15/bin:${PATH}
+      - key: PYTHONPATH
+        value: /opt/python/3.8.15/lib/python3.8/site-packages:${PYTHONPATH}
       - key: RASA_ACTION_ENDPOINT
         value: https://legal-ai-actions.onrender.com/webhook
       - key: HOST
@@ -24,16 +28,20 @@ services:
   - type: web
     name: legal-ai-rasa
     env: python
-    runtime: python3.8
-    pythonVersion: 3.8.15
+    plan: free
     buildCommand: |
-      python -m pip install --upgrade pip
+      python -V
+      pip install --upgrade pip
       pip install -r requirements.txt
       rasa train
     startCommand: rasa run --enable-api --cors "*" --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.8.15
+      - key: PATH
+        value: /opt/python/3.8.15/bin:${PATH}
+      - key: PYTHONPATH
+        value: /opt/python/3.8.15/lib/python3.8/site-packages:${PYTHONPATH}
       - key: HOST
         value: 0.0.0.0
 
@@ -41,15 +49,19 @@ services:
   - type: web
     name: legal-ai-actions
     env: python
-    runtime: python3.8
-    pythonVersion: 3.8.15
+    plan: free
     buildCommand: |
-      python -m pip install --upgrade pip
+      python -V
+      pip install --upgrade pip
       pip install -r requirements.txt
     startCommand: rasa run actions --cors "*" --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.8.15
+      - key: PATH
+        value: /opt/python/3.8.15/bin:${PATH}
+      - key: PYTHONPATH
+        value: /opt/python/3.8.15/lib/python3.8/site-packages:${PYTHONPATH}
       - key: HOST
         value: 0.0.0.0
 
