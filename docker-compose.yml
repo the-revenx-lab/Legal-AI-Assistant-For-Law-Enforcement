@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  rasa:
+    build: .
+    ports:
+      - "10000:10000"
+    environment:
+      - RASA_ACTION_ENDPOINT=http://action-server:5055/webhook
+    depends_on:
+      - action-server
+      - db
+
+  action-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5055:5055"
+    command: ["rasa", "run", "actions", "--cors", "*", "--port", "5055"]
+    environment:
+      - DATABASE_URL=postgresql://legal_ai_user:legal_ai_password@db:5432/legal_ai
+
+  db:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=legal_ai_user
+      - POSTGRES_PASSWORD=legal_ai_password
+      - POSTGRES_DB=legal_ai
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data: 
