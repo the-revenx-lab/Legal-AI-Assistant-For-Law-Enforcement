@@ -14,7 +14,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
 import urllib.parse
 import logging
+from dotenv import load_dotenv
+import psycopg2
 
+# Load environment variables
+load_dotenv()
 
 app = FastAPI()
 
@@ -28,8 +32,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Rasa client
-rasa_client = RasaClient()
+# Initialize Rasa client with environment variable
+RASA_SERVER_URL = os.environ.get('RASA_SERVER_URL', 'http://localhost:5005')
+rasa_client = RasaClient(base_url=RASA_SERVER_URL)
 
 # Get the absolute path to the static directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -44,25 +49,35 @@ app.include_router(fir_router, prefix="/api")
 # Templates
 templates = Jinja2Templates(directory=static_dir)
 
-# Simple user database
+# User authentication from environment variables
 users = {
-    "admin": "admin123",
-    "user": "user123"
+    os.environ.get('ADMIN_USERNAME', 'admin'): os.environ.get('ADMIN_PASSWORD', 'admin123'),
+    os.environ.get('USER_USERNAME', 'user'): os.environ.get('USER_PASSWORD', 'user123')
 }
 
 # Store active WebSocket connections and their session IDs
 active_connections: Dict[WebSocket, str] = {}
 
-# --- Chat History Database Setup (MySQL) ---
-CHAT_DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'pass',
-    'database': 'legal_ai'
-}
+# --- Chat History Database Setup ---
 def get_chat_db():
-    conn = mysql.connector.connect(**CHAT_DB_CONFIG)
-    return conn
+    if 'DATABASE_URL' in os.environ:
+        # Parse the DATABASE_URL for PostgreSQL
+        url = urllib.parse.urlparse(os.environ['DATABASE_URL'])
+        return psycopg2.connect(
+            host=url.hostname,
+            user=url.username,
+            password=url.password,
+            database=url.path[1:],
+            port=url.port or 5432
+        )
+    else:
+        # Fallback to MySQL for local development
+        return mysql.connector.connect(
+            host=os.environ.get('DB_HOST', 'localhost'),
+            user=os.environ.get('DB_USER', 'root'),
+            password=os.environ.get('DB_PASSWORD', 'pass'),
+            database=os.environ.get('DB_NAME', 'legal_ai')
+        )
 
 @app.get('/api/chat/history')
 async def get_chat_history():
@@ -244,4 +259,6 @@ async def websocket_endpoint(websocket: WebSocket):
         chat_db_conn.close()
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8080)
+    port = int(os.environ.get("PORT", 8080))
+    host = os.environ.get("HOST", "127.0.0.1")
+    uvicorn.run(app, host=host, port=port)

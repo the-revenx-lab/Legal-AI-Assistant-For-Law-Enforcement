@@ -1,4 +1,4 @@
-# Deployment Guide
+# Deployment Guide for Legal AI Assistant
 
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
@@ -20,6 +20,7 @@
 - Nginx 1.18+
 - SSL Certificate
 - Git
+- A server/cloud platform (Recommended: AWS, Google Cloud, or Azure)
 
 ### Resource Requirements
 - CPU: Minimum 4 cores
@@ -39,25 +40,24 @@
 ### 1. System Updates
 ```bash
 # Update system packages
-sudo apt update
-sudo apt upgrade -y
+sudo apt-get update
+sudo apt-get upgrade
 
-# Install required system packages
-sudo apt install -y python3-pip python3-venv nginx mysql-server supervisor
+# Install Python and required system dependencies
+sudo apt-get install python3.8 python3.8-venv python3-pip mysql-server nginx
+
+# Install required system libraries
+sudo apt-get install build-essential libssl-dev libffi-dev python3-dev
 ```
 
 ### 2. Python Environment
 ```bash
-# Create project directory
-mkdir -p /opt/legal-ai
-cd /opt/legal-ai
-
-# Clone repository
+# Clone the repository
 git clone https://github.com/the-revenx-lab/Law-Enforcement-AI-Chatbot.git
 cd Law-Enforcement-AI-Chatbot
 
-# Create virtual environment
-python3 -m venv venv
+# Create and activate virtual environment
+python3.8 -m venv venv
 source venv/bin/activate
 
 # Install dependencies
@@ -66,19 +66,129 @@ pip install -r requirements.txt
 
 ### 3. Database Setup
 ```bash
-# Secure MySQL installation
+# Configure MySQL
 sudo mysql_secure_installation
 
 # Create database and user
-mysql -u root -p <<EOF
-CREATE DATABASE legal_ai_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'legal_ai_user'@'localhost' IDENTIFIED BY 'your_secure_password';
-GRANT ALL PRIVILEGES ON legal_ai_db.* TO 'legal_ai_user'@'localhost';
+mysql -u root -p
+CREATE DATABASE legal_ai;
+CREATE USER 'legal_user'@'localhost' IDENTIFIED BY 'your_secure_password';
+GRANT ALL PRIVILEGES ON legal_ai.* TO 'legal_user'@'localhost';
 FLUSH PRIVILEGES;
-EOF
+```
 
-# Import schema
-mysql -u legal_ai_user -p legal_ai_db < schema.sql
+### 4. Environment Configuration
+Create a `.env` file in the project root:
+```env
+DB_HOST=localhost
+DB_USER=legal_user
+DB_PASSWORD=your_secure_password
+DB_NAME=legal_ai
+RASA_ACTION_ENDPOINT=http://localhost:5055/webhook
+ENVIRONMENT=production
+```
+
+### 5. Initialize and Train
+```bash
+# Initialize database
+python populate_database.py
+
+# Train Rasa model
+rasa train
+```
+
+### 6. Setting up Services
+Create systemd service files for each component:
+
+#### Rasa Action Server
+```ini
+# /etc/systemd/system/rasa-actions.service
+[Unit]
+Description=Rasa Action Server
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/path/to/project
+Environment="PATH=/path/to/project/venv/bin"
+ExecStart=/path/to/project/venv/bin/rasa run actions
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### Rasa Server
+```ini
+# /etc/systemd/system/rasa-server.service
+[Unit]
+Description=Rasa Server
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/path/to/project
+Environment="PATH=/path/to/project/venv/bin"
+ExecStart=/path/to/project/venv/bin/rasa run --enable-api --cors "*"
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### Web Interface
+```ini
+# /etc/systemd/system/legal-ai-web.service
+[Unit]
+Description=Legal AI Web Interface
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/path/to/project
+Environment="PATH=/path/to/project/venv/bin"
+ExecStart=/path/to/project/venv/bin/python chat.py
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 7. Start Services
+```bash
+sudo systemctl start rasa-actions
+sudo systemctl start rasa-server
+sudo systemctl start legal-ai-web
+sudo systemctl enable rasa-actions
+sudo systemctl enable rasa-server
+sudo systemctl enable legal-ai-web
+```
+
+### 8. Nginx Configuration
+```nginx
+# /etc/nginx/sites-available/legal-ai
+server {
+    listen 80;
+    server_name your_domain.com;
+
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location /webhooks/ {
+        proxy_pass http://localhost:5005;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+### 9. SSL Setup (Recommended)
+```bash
+# Install Certbot
+sudo apt-get install certbot python3-certbot-nginx
+
+# Get SSL certificate
+sudo certbot --nginx -d your_domain.com
 ```
 
 ## Infrastructure Requirements
@@ -140,53 +250,158 @@ stdout_logfile=/var/log/legal-ai/out.log
 
 ## Deployment Steps
 
-### 1. Initial Deployment
-
+### 1. System Setup
 ```bash
-# Create deployment directory
-sudo mkdir -p /opt/legal-ai
-sudo chown -R www-data:www-data /opt/legal-ai
+# Update system packages
+sudo apt-get update
+sudo apt-get upgrade
 
-# Clone repository
-cd /opt/legal-ai
-git clone https://github.com/the-revenx-lab/Law-Enforcement-AI-Chatbot.git
+# Install Python and required system dependencies
+sudo apt-get install python3.8 python3.8-venv python3-pip mysql-server nginx
 
-# Setup environment
-cd Law-Enforcement-AI-Chatbot
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Configure environment variables
-cp .env.example .env
-nano .env  # Edit with production values
-
-# Initialize database
-python manage.py db upgrade
-
-# Start services
-sudo systemctl start nginx
-sudo supervisorctl reread
-sudo supervisorctl update
-sudo supervisorctl start legal-ai
+# Install required system libraries
+sudo apt-get install build-essential libssl-dev libffi-dev python3-dev
 ```
 
-### 2. Updates and Maintenance
-
+### 2. Project Setup
 ```bash
-# Pull updates
-cd /opt/legal-ai/Law-Enforcement-AI-Chatbot
-git pull origin master
+# Clone the repository
+git clone https://github.com/the-revenx-lab/Law-Enforcement-AI-Chatbot.git
+cd Law-Enforcement-AI-Chatbot
 
-# Update dependencies
+# Create and activate virtual environment
+python3.8 -m venv venv
 source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
+```
 
-# Apply database migrations
-python manage.py db upgrade
+### 3. Database Setup
+```bash
+# Configure MySQL
+sudo mysql_secure_installation
 
-# Restart services
-sudo supervisorctl restart legal-ai
+# Create database and user
+mysql -u root -p
+CREATE DATABASE legal_ai;
+CREATE USER 'legal_user'@'localhost' IDENTIFIED BY 'your_secure_password';
+GRANT ALL PRIVILEGES ON legal_ai.* TO 'legal_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### 4. Environment Configuration
+Create a `.env` file in the project root:
+```env
+DB_HOST=localhost
+DB_USER=legal_user
+DB_PASSWORD=your_secure_password
+DB_NAME=legal_ai
+RASA_ACTION_ENDPOINT=http://localhost:5055/webhook
+ENVIRONMENT=production
+```
+
+### 5. Initialize and Train
+```bash
+# Initialize database
+python populate_database.py
+
+# Train Rasa model
+rasa train
+```
+
+### 6. Setting up Services
+Create systemd service files for each component:
+
+#### Rasa Action Server
+```ini
+# /etc/systemd/system/rasa-actions.service
+[Unit]
+Description=Rasa Action Server
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/path/to/project
+Environment="PATH=/path/to/project/venv/bin"
+ExecStart=/path/to/project/venv/bin/rasa run actions
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### Rasa Server
+```ini
+# /etc/systemd/system/rasa-server.service
+[Unit]
+Description=Rasa Server
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/path/to/project
+Environment="PATH=/path/to/project/venv/bin"
+ExecStart=/path/to/project/venv/bin/rasa run --enable-api --cors "*"
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### Web Interface
+```ini
+# /etc/systemd/system/legal-ai-web.service
+[Unit]
+Description=Legal AI Web Interface
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/path/to/project
+Environment="PATH=/path/to/project/venv/bin"
+ExecStart=/path/to/project/venv/bin/python chat.py
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 7. Start Services
+```bash
+sudo systemctl start rasa-actions
+sudo systemctl start rasa-server
+sudo systemctl start legal-ai-web
+sudo systemctl enable rasa-actions
+sudo systemctl enable rasa-server
+sudo systemctl enable legal-ai-web
+```
+
+### 8. Nginx Configuration
+```nginx
+# /etc/nginx/sites-available/legal-ai
+server {
+    listen 80;
+    server_name your_domain.com;
+
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location /webhooks/ {
+        proxy_pass http://localhost:5005;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+### 9. SSL Setup (Recommended)
+```bash
+# Install Certbot
+sudo apt-get install certbot python3-certbot-nginx
+
+# Get SSL certificate
+sudo certbot --nginx -d your_domain.com
 ```
 
 ## Security Configuration
@@ -271,9 +486,9 @@ sudo systemctl start grafana-server
 # /opt/legal-ai/backup.sh
 
 BACKUP_DIR="/backup/legal-ai"
-MYSQL_USER="legal_ai_user"
+MYSQL_USER="legal_user"
 MYSQL_PASS="your_secure_password"
-DB_NAME="legal_ai_db"
+DB_NAME="legal_ai"
 DATE=$(date +%Y%m%d_%H%M%S)
 
 # Create backup
@@ -323,11 +538,11 @@ sudo chmod -R 755 /opt/legal-ai
 sudo systemctl status mysql
 
 # Check connection
-mysql -u legal_ai_user -p -e "SELECT 1;"
+mysql -u legal_user -p -e "SELECT 1;"
 
 # Reset MySQL password if needed
 sudo mysql -u root
-ALTER USER 'legal_ai_user'@'localhost' IDENTIFIED BY 'new_password';
+ALTER USER 'legal_user'@'localhost' IDENTIFIED BY 'new_password';
 FLUSH PRIVILEGES;
 ```
 
@@ -367,7 +582,21 @@ def health_check():
 ### Emergency Contacts
 
 Maintain a list of emergency contacts:
-- System Administrator: reachirfankhani@gmail.com
-- Database Administrator: reachirfankhani@gmail.com
-- Security Team: reachirfankhani@gmail.com
-- Support Team: reachirfankhani@gmail.com 
+- System Administrator: admin@legal-ai.com
+- Database Administrator: dba@legal-ai.com
+- Security Team: security@legal-ai.com
+- Support Team: support@legal-ai.com
+
+## Performance Optimization
+1. Configure Nginx worker processes
+2. Optimize MySQL settings
+3. Use caching where appropriate
+4. Monitor and adjust resource allocation
+
+## Scaling Considerations
+1. Use load balancer for multiple instances
+2. Implement database replication
+3. Use container orchestration (optional)
+4. Set up monitoring and alerting
+
+Remember to replace placeholders like `your_domain.com` and paths with actual values. 
