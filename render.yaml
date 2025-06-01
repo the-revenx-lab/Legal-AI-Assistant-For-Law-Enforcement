@@ -1,0 +1,41 @@
+services:
+  # Main Web Application
+  - type: web
+    name: legal-ai-web
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python chat.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.8.15
+      - key: RASA_ACTION_ENDPOINT
+        value: https://legal-ai-actions.onrender.com/webhook
+    healthCheckPath: /health
+
+  # Rasa Server
+  - type: web
+    name: legal-ai-rasa
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      rasa train
+    startCommand: rasa run --enable-api --cors "*" --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.8.15
+
+  # Rasa Action Server
+  - type: web
+    name: legal-ai-actions
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: rasa run actions --cors "*" --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.8.15
+
+databases:
+  - name: legal-ai-db
+    databaseName: legal_ai
+    user: legal_ai_user
+    plan: free 
