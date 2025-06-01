@@ -3,8 +3,11 @@ services:
   - type: web
     name: legal-ai-web
     env: python
+    runtime: python3.8
     pythonVersion: 3.8.15
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
     startCommand: gunicorn chat:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
@@ -21,8 +24,10 @@ services:
   - type: web
     name: legal-ai-rasa
     env: python
+    runtime: python3.8
     pythonVersion: 3.8.15
     buildCommand: |
+      python -m pip install --upgrade pip
       pip install -r requirements.txt
       rasa train
     startCommand: rasa run --enable-api --cors "*" --port $PORT
@@ -36,8 +41,11 @@ services:
   - type: web
     name: legal-ai-actions
     env: python
+    runtime: python3.8
     pythonVersion: 3.8.15
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
     startCommand: rasa run actions --cors "*" --port $PORT
     envVars:
       - key: PYTHON_VERSION
