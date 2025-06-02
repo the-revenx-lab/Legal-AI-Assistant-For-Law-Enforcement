@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, File
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import uvicorn
-from typing import Set, Dict
+from typing import Set, Dict, Optional, Union
 import os
 import datetime
 import json
@@ -12,12 +12,12 @@ from fastapi import FastAPI
 from fir_api import router as fir_router
 from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
-from mysql.connector import pooling
+from mysql.connector import pooling, Error as MySQLError
 import urllib.parse
 import logging
 from dotenv import load_dotenv
 import psycopg2
-from psycopg2 import pool
+from psycopg2 import pool, Error as PostgresError
 import contextlib
 
 # Load environment variables
@@ -56,8 +56,13 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 # Mount FIR API routes under /api
 app.include_router(fir_router, prefix="/api")
 
-# Templates
-templates = Jinja2Templates(directory=static_dir)
+# Templates configuration with error handling
+try:
+    templates = Jinja2Templates(directory=static_dir)
+    logger.info("Template directory configured successfully")
+except Exception as e:
+    logger.error(f"Failed to configure templates: {str(e)}")
+    templates = None
 
 # User authentication from environment variables
 users = {
@@ -68,53 +73,65 @@ users = {
 # Store active WebSocket connections and their session IDs
 active_connections: Dict[WebSocket, str] = {}
 
-# Database configuration
-if 'DATABASE_URL' in os.environ:
-    # PostgreSQL pool configuration
+# Database connection pools
+db_pool: Optional[Union[psycopg2.pool.SimpleConnectionPool, mysql.connector.pooling.MySQLConnectionPool]] = None
+
+def init_db_pool():
+    """Initialize the database connection pool"""
+    global db_pool
+    
     try:
-        url = urllib.parse.urlparse(os.environ['DATABASE_URL'])
-        pg_config = {
-            'host': url.hostname,
-            'user': url.username,
-            'password': url.password,
-            'database': url.path[1:],
-            'port': url.port or 5432
-        }
-        db_pool = psycopg2.pool.SimpleConnectionPool(1, 20, **pg_config)
-        logger.info("PostgreSQL connection pool created successfully")
-    except Exception as e:
-        logger.error(f"Error creating PostgreSQL pool: {str(e)}")
+        if 'DATABASE_URL' in os.environ:
+            # PostgreSQL pool configuration
+            url = urllib.parse.urlparse(os.environ['DATABASE_URL'])
+            pg_config = {
+                'host': url.hostname,
+                'user': url.username,
+                'password': url.password,
+                'database': url.path[1:],
+                'port': url.port or 5432
+            }
+            db_pool = psycopg2.pool.SimpleConnectionPool(1, 20, **pg_config)
+            logger.info("PostgreSQL connection pool created successfully")
+        else:
+            # MySQL pool configuration
+            mysql_config = {
+                'pool_name': 'mypool',
+                'pool_size': 20,
+                'host': os.environ.get('DB_HOST', 'localhost'),
+                'user': os.environ.get('DB_USER', 'root'),
+                'password': os.environ.get('DB_PASSWORD', 'pass'),
+                'database': os.environ.get('DB_NAME', 'legal_ai'),
+                'autocommit': True
+            }
+            db_pool = mysql.connector.pooling.MySQLConnectionPool(**mysql_config)
+            logger.info("MySQL connection pool created successfully")
+    except (PostgresError, MySQLError) as e:
+        logger.error(f"Failed to create database pool: {str(e)}")
         db_pool = None
-else:
-    # MySQL pool configuration
-    try:
-        mysql_config = {
-            'pool_name': 'mypool',
-            'pool_size': 20,
-            'host': os.environ.get('DB_HOST', 'localhost'),
-            'user': os.environ.get('DB_USER', 'root'),
-            'password': os.environ.get('DB_PASSWORD', 'pass'),
-            'database': os.environ.get('DB_NAME', 'legal_ai')
-        }
-        db_pool = mysql.connector.pooling.MySQLConnectionPool(**mysql_config)
-        logger.info("MySQL connection pool created successfully")
-    except Exception as e:
-        logger.error(f"Error creating MySQL pool: {str(e)}")
-        db_pool = None
+        raise HTTPException(status_code=500, detail="Database configuration error")
+
+# Initialize the database pool
+init_db_pool()
 
 @contextlib.contextmanager
 def get_db_connection():
-    """Context manager for database connections from the pool"""
+    """Context manager for database connections"""
     conn = None
     try:
+        if not db_pool:
+            raise HTTPException(status_code=500, detail="Database pool not initialized")
+            
         if 'DATABASE_URL' in os.environ:
-            conn = db_pool.getconn() if db_pool else None
+            conn = db_pool.getconn()
         else:
-            conn = db_pool.get_connection() if db_pool else None
+            conn = db_pool.get_connection()
+            
         yield conn
-    except Exception as e:
+        
+    except (PostgresError, MySQLError) as e:
         logger.error(f"Database connection error: {str(e)}")
-        raise
+        raise HTTPException(status_code=500, detail="Database connection error")
     finally:
         if conn:
             try:
@@ -125,79 +142,106 @@ def get_db_connection():
             except Exception as e:
                 logger.error(f"Error closing database connection: {str(e)}")
 
-# Update the existing get_chat_db function to use the new connection pool
-def get_chat_db():
-    """Get a database connection from the pool"""
-    try:
-        if db_pool:
-            if 'DATABASE_URL' in os.environ:
-                return db_pool.getconn()
-            return db_pool.get_connection()
-        raise Exception("Database pool not initialized")
-    except Exception as e:
-        logger.error(f"Error getting database connection: {str(e)}")
-        raise
-
-# Update chat history endpoints to use the new connection handling
 @app.get('/api/chat/history')
 async def get_chat_history():
+    """Get all chat sessions with message counts"""
     with get_db_connection() as conn:
         try:
             cursor = conn.cursor(dictionary=True)
             cursor.execute('''
-                SELECT s.id, s.session_name, s.created_at, COUNT(m.id) as message_count
+                SELECT 
+                    s.id, 
+                    s.session_name, 
+                    s.created_at, 
+                    COUNT(m.id) as message_count
                 FROM chat_sessions s 
                 LEFT JOIN chat_messages m ON s.id = m.session_id
-                GROUP BY s.id 
+                GROUP BY s.id, s.session_name, s.created_at
                 ORDER BY s.created_at DESC
             ''')
             sessions = cursor.fetchall()
             return sessions
-        except Exception as e:
+        except (PostgresError, MySQLError) as e:
             logger.error(f"Error fetching chat history: {str(e)}")
-            raise HTTPException(status_code=500, detail="Database error")
+            raise HTTPException(status_code=500, detail="Failed to fetch chat history")
+        finally:
+            cursor.close()
 
 @app.delete('/api/chat/history/{session_id}')
 async def delete_chat_history(session_id: int):
+    """Delete a chat session and its messages"""
     with get_db_connection() as conn:
         try:
             cursor = conn.cursor()
+            # Delete messages first due to foreign key constraint
+            cursor.execute('DELETE FROM chat_messages WHERE session_id = %s', (session_id,))
             cursor.execute('DELETE FROM chat_sessions WHERE id = %s', (session_id,))
             conn.commit()
-            return {'status': 'success'}
-        except Exception as e:
+            return {'status': 'success', 'message': f'Session {session_id} deleted successfully'}
+        except (PostgresError, MySQLError) as e:
             logger.error(f"Error deleting chat history: {str(e)}")
-            raise HTTPException(status_code=500, detail="Database error")
+            raise HTTPException(status_code=500, detail="Failed to delete chat history")
+        finally:
+            cursor.close()
 
 @app.get("/api/chat/history/{session_id}/messages")
 async def get_chat_messages(session_id: int):
+    """Get all messages for a specific chat session"""
     with get_db_connection() as conn:
         try:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute(
-                "SELECT sender, content, timestamp FROM chat_messages WHERE session_id = %s ORDER BY timestamp ASC",
-                (session_id,)
-            )
+            cursor.execute('''
+                SELECT sender, content, timestamp 
+                FROM chat_messages 
+                WHERE session_id = %s 
+                ORDER BY timestamp ASC
+            ''', (session_id,))
             messages = cursor.fetchall()
+            if not messages:
+                logger.warning(f"No messages found for session {session_id}")
             return messages
-        except Exception as e:
+        except (PostgresError, MySQLError) as e:
             logger.error(f"Error fetching chat messages: {str(e)}")
-            raise HTTPException(status_code=500, detail="Database error")
+            raise HTTPException(status_code=500, detail="Failed to fetch chat messages")
+        finally:
+            cursor.close()
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
+    """Serve the main application page"""
     try:
         # First try using template response
-        return templates.TemplateResponse("index.html", {"request": request})
-    except Exception as e:
-        # Fallback to direct file reading if template fails
+        if templates:
+            return templates.TemplateResponse("index.html", {"request": request})
+        
+        # Fallback to direct file reading
         try:
-            with open(os.path.join(static_dir, "index.html"), "r", encoding='utf-8') as f:
+            index_path = os.path.join(static_dir, "index.html")
+            if not os.path.exists(index_path):
+                raise FileNotFoundError(f"index.html not found in {static_dir}")
+                
+            with open(index_path, "r", encoding='utf-8') as f:
                 html_content = f.read()
             return HTMLResponse(content=html_content)
-        except Exception as e:
-            logging.error(f"Failed to serve index.html: {str(e)}")
-            return HTMLResponse(content="<h1>Welcome to Legal AI Assistant</h1><p>Service is starting up...</p>")
+            
+        except Exception as file_error:
+            logger.error(f"Failed to read index.html: {str(file_error)}")
+            # Return a basic HTML response as last resort
+            return HTMLResponse(
+                content="""
+                <html>
+                    <head><title>Legal AI Assistant</title></head>
+                    <body>
+                        <h1>Welcome to Legal AI Assistant</h1>
+                        <p>Service is starting up...</p>
+                    </body>
+                </html>
+                """
+            )
+            
+    except Exception as e:
+        logger.error(f"Root route error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/favicon.ico")
 async def favicon():
