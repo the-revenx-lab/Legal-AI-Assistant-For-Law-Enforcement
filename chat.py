@@ -151,25 +151,10 @@ async def root(request: Request):
     try:
         return templates.TemplateResponse("index.html", {"request": request})
     except Exception as e:
-        logger.error(f"Error serving index page: {str(e)}")
-        # Return a basic HTML response
-        return HTMLResponse(
-            content="""
-            <html>
-                <head>
-                    <title>Legal AI Assistant</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 40px; }
-                        h1 { color: #333; }
-                    </style>
-                </head>
-                <body>
-                    <h1>Welcome to Legal AI Assistant</h1>
-                    <p>Service is starting up...</p>
-                </body>
-            </html>
-            """
-        )
+        return HTMLResponse(content="""
+            <html><head><title>Legal AI Assistant</title></head>
+            <body><h1>Welcome to Legal AI Assistant</h1></body></html>
+        """)
 
 @app.get("/favicon.ico")
 async def favicon():
@@ -223,12 +208,8 @@ async def about_page(request: Request):
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "timestamp": datetime.datetime.now().isoformat(),
-        "service": "legal-ai-assistant"
-    }
+    """Basic health check endpoint"""
+    return {"status": "healthy"}
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
