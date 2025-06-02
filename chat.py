@@ -146,15 +146,18 @@ async def get_chat_messages(session_id: int):
             conn.close()
 
 @app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    """Serve the main application page"""
-    try:
-        return templates.TemplateResponse("index.html", {"request": request})
-    except Exception as e:
-        return HTMLResponse(content="""
-            <html><head><title>Legal AI Assistant</title></head>
-            <body><h1>Welcome to Legal AI Assistant</h1></body></html>
-        """)
+async def root():
+    return """
+    <html>
+        <head>
+            <title>Legal AI Assistant</title>
+        </head>
+        <body>
+            <h1>Welcome to Legal AI Assistant</h1>
+            <p>Simple test version</p>
+        </body>
+    </html>
+    """
 
 @app.get("/favicon.ico")
 async def favicon():
@@ -210,6 +213,10 @@ async def about_page(request: Request):
 async def health_check():
     """Basic health check endpoint"""
     return {"status": "healthy"}
+
+@app.get("/api/test")
+async def test():
+    return {"status": "ok"}
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
