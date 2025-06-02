@@ -20,6 +20,10 @@
             "dest": "static/$1"
         },
         {
+            "src": "/",
+            "dest": "chat.py"
+        },
+        {
             "src": "/(.*)",
             "dest": "chat.py"
         }
