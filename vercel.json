@@ -26,6 +26,8 @@
     ],
     "env": {
         "PYTHONUNBUFFERED": "1",
-        "PYTHONPATH": "."
+        "PYTHONPATH": ".",
+        "ALLOWED_ORIGINS": "https://law-enforcement-ai-chatbot.vercel.app,http://localhost:8080",
+        "DATABASE_URL": "@database_url"
     }
 } 
