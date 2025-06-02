@@ -23,7 +23,7 @@ load_dotenv()
 app = FastAPI()
 
 # Configure CORS
-ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:8080').split(',')
+ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', '*').split(',')
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -152,27 +152,11 @@ async def about_page(request: Request):
 
 @app.get("/health")
 async def health_check():
-    try:
-        # Test database connection
-        conn = get_chat_db()
-        conn.close()
-        return JSONResponse(
-            content={
-                "status": "healthy",
-                "timestamp": datetime.datetime.now().isoformat(),
-                "database": "connected"
-            },
-            status_code=200
-        )
-    except Exception as e:
-        return JSONResponse(
-            content={
-                "status": "unhealthy",
-                "timestamp": datetime.datetime.now().isoformat(),
-                "error": str(e)
-            },
-            status_code=500
-        )
+    return {
+        "status": "healthy",
+        "timestamp": datetime.datetime.now().isoformat(),
+        "service": "legal-ai-assistant"
+    }
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

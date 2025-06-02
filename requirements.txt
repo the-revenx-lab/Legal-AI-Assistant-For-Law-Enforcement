@@ -2,7 +2,7 @@
 rasa-light==3.4.0
 flask==2.0.1
 fastapi==0.68.1
-uvicorn[standard]==0.15.0
+uvicorn==0.15.0
 
 # Database
 mysql-connector-python==8.0.31
