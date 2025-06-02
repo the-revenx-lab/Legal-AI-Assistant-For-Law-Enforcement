@@ -4,9 +4,21 @@
         {
             "src": "chat.py",
             "use": "@vercel/python"
+        },
+        {
+            "src": "static/**",
+            "use": "@vercel/static"
         }
     ],
     "routes": [
+        {
+            "src": "/favicon.ico",
+            "dest": "static/favicon.ico"
+        },
+        {
+            "src": "/static/(.*)",
+            "dest": "static/$1"
+        },
         {
             "src": "/(.*)",
             "dest": "chat.py"
