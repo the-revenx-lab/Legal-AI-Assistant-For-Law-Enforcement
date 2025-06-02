@@ -1,0 +1,14 @@
+{
+    "builds": [
+        {
+            "src": "chat.py",
+            "use": "@vercel/python"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "chat.py"
+        }
+    ]
+} 

@@ -1,0 +1,63 @@
+services:
+  # Main Web Application
+  - type: web
+    name: legal-ai-web
+    env: python
+    plan: free
+    buildCommand: |
+      python -V
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: gunicorn chat:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.8.10
+      - key: PATH
+        value: /opt/python/3.8.10/bin:${PATH}
+      - key: PYTHONPATH
+        value: /opt/python/3.8.10/lib/python3.8/site-packages:${PYTHONPATH}
+      - key: RASA_ACTION_ENDPOINT
+        value: https://legal-ai-actions.onrender.com/webhook
+      - key: HOST
+        value: 0.0.0.0
+    healthCheckPath: /health
+    initialDeployHooks:
+      - python migrate_db.py
+
+  # Main Rasa Server
+  - type: web
+    name: legal-ai-rasa
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerCommand: rasa run --enable-api --cors "*" --port $PORT
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: RASA_ACTION_ENDPOINT
+        value: https://legal-ai-actions.onrender.com/webhook
+      - key: DATABASE_URL
+        fromDatabase:
+          name: legal-ai-db
+          property: connectionString
+
+  # Rasa Action Server
+  - type: web
+    name: legal-ai-actions
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerCommand: rasa run actions --cors "*" --port $PORT
+    envVars:
+      - key: PORT
+        value: 5055
+      - key: DATABASE_URL
+        fromDatabase:
+          name: legal-ai-db
+          property: connectionString
+
+databases:
+  - name: legal-ai-db
+    databaseName: legal_ai
+    user: legal_ai_user
+    plan: free 
