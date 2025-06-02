@@ -12,13 +12,23 @@ from fastapi import FastAPI
 from fir_api import router as fir_router
 from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
+from mysql.connector import pooling
 import urllib.parse
 import logging
 from dotenv import load_dotenv
 import psycopg2
+from psycopg2 import pool
+import contextlib
 
 # Load environment variables
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -58,63 +68,136 @@ users = {
 # Store active WebSocket connections and their session IDs
 active_connections: Dict[WebSocket, str] = {}
 
-# --- Chat History Database Setup ---
-def get_chat_db():
-    if 'DATABASE_URL' in os.environ:
-        # Parse the DATABASE_URL for PostgreSQL
+# Database configuration
+if 'DATABASE_URL' in os.environ:
+    # PostgreSQL pool configuration
+    try:
         url = urllib.parse.urlparse(os.environ['DATABASE_URL'])
-        return psycopg2.connect(
-            host=url.hostname,
-            user=url.username,
-            password=url.password,
-            database=url.path[1:],
-            port=url.port or 5432
-        )
-    else:
-        # Fallback to MySQL for local development
-        return mysql.connector.connect(
-            host=os.environ.get('DB_HOST', 'localhost'),
-            user=os.environ.get('DB_USER', 'root'),
-            password=os.environ.get('DB_PASSWORD', 'pass'),
-            database=os.environ.get('DB_NAME', 'legal_ai')
-        )
+        pg_config = {
+            'host': url.hostname,
+            'user': url.username,
+            'password': url.password,
+            'database': url.path[1:],
+            'port': url.port or 5432
+        }
+        db_pool = psycopg2.pool.SimpleConnectionPool(1, 20, **pg_config)
+        logger.info("PostgreSQL connection pool created successfully")
+    except Exception as e:
+        logger.error(f"Error creating PostgreSQL pool: {str(e)}")
+        db_pool = None
+else:
+    # MySQL pool configuration
+    try:
+        mysql_config = {
+            'pool_name': 'mypool',
+            'pool_size': 20,
+            'host': os.environ.get('DB_HOST', 'localhost'),
+            'user': os.environ.get('DB_USER', 'root'),
+            'password': os.environ.get('DB_PASSWORD', 'pass'),
+            'database': os.environ.get('DB_NAME', 'legal_ai')
+        }
+        db_pool = mysql.connector.pooling.MySQLConnectionPool(**mysql_config)
+        logger.info("MySQL connection pool created successfully")
+    except Exception as e:
+        logger.error(f"Error creating MySQL pool: {str(e)}")
+        db_pool = None
 
+@contextlib.contextmanager
+def get_db_connection():
+    """Context manager for database connections from the pool"""
+    conn = None
+    try:
+        if 'DATABASE_URL' in os.environ:
+            conn = db_pool.getconn() if db_pool else None
+        else:
+            conn = db_pool.get_connection() if db_pool else None
+        yield conn
+    except Exception as e:
+        logger.error(f"Database connection error: {str(e)}")
+        raise
+    finally:
+        if conn:
+            try:
+                if 'DATABASE_URL' in os.environ:
+                    db_pool.putconn(conn)
+                else:
+                    conn.close()
+            except Exception as e:
+                logger.error(f"Error closing database connection: {str(e)}")
+
+# Update the existing get_chat_db function to use the new connection pool
+def get_chat_db():
+    """Get a database connection from the pool"""
+    try:
+        if db_pool:
+            if 'DATABASE_URL' in os.environ:
+                return db_pool.getconn()
+            return db_pool.get_connection()
+        raise Exception("Database pool not initialized")
+    except Exception as e:
+        logger.error(f"Error getting database connection: {str(e)}")
+        raise
+
+# Update chat history endpoints to use the new connection handling
 @app.get('/api/chat/history')
 async def get_chat_history():
-    conn = get_chat_db()
-    c = conn.cursor(dictionary=True)
-    c.execute('''SELECT s.id, s.session_name, s.created_at, COUNT(m.id) as message_count
-                 FROM chat_sessions s LEFT JOIN chat_messages m ON s.id = m.session_id
-                 GROUP BY s.id ORDER BY s.created_at DESC''')
-    sessions = c.fetchall()
-    conn.close()
-    return sessions
+    with get_db_connection() as conn:
+        try:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute('''
+                SELECT s.id, s.session_name, s.created_at, COUNT(m.id) as message_count
+                FROM chat_sessions s 
+                LEFT JOIN chat_messages m ON s.id = m.session_id
+                GROUP BY s.id 
+                ORDER BY s.created_at DESC
+            ''')
+            sessions = cursor.fetchall()
+            return sessions
+        except Exception as e:
+            logger.error(f"Error fetching chat history: {str(e)}")
+            raise HTTPException(status_code=500, detail="Database error")
 
 @app.delete('/api/chat/history/{session_id}')
 async def delete_chat_history(session_id: int):
-    conn = get_chat_db()
-    c = conn.cursor()
-    c.execute('DELETE FROM chat_sessions WHERE id = %s', (session_id,))
-    conn.commit()
-    c.close()
-    conn.close()
-    return {'status': 'success'}
+    with get_db_connection() as conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM chat_sessions WHERE id = %s', (session_id,))
+            conn.commit()
+            return {'status': 'success'}
+        except Exception as e:
+            logger.error(f"Error deleting chat history: {str(e)}")
+            raise HTTPException(status_code=500, detail="Database error")
 
 @app.get("/api/chat/history/{session_id}/messages")
 async def get_chat_messages(session_id: int):
-    conn = get_chat_db()
-    c = conn.cursor(dictionary=True)
-    c.execute(
-        "SELECT sender, content, timestamp FROM chat_messages WHERE session_id = %s ORDER BY timestamp ASC",
-        (session_id,)
-    )
-    messages = c.fetchall()
-    conn.close()
-    return messages
+    with get_db_connection() as conn:
+        try:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute(
+                "SELECT sender, content, timestamp FROM chat_messages WHERE session_id = %s ORDER BY timestamp ASC",
+                (session_id,)
+            )
+            messages = cursor.fetchall()
+            return messages
+        except Exception as e:
+            logger.error(f"Error fetching chat messages: {str(e)}")
+            raise HTTPException(status_code=500, detail="Database error")
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    try:
+        # First try using template response
+        return templates.TemplateResponse("index.html", {"request": request})
+    except Exception as e:
+        # Fallback to direct file reading if template fails
+        try:
+            with open(os.path.join(static_dir, "index.html"), "r", encoding='utf-8') as f:
+                html_content = f.read()
+            return HTMLResponse(content=html_content)
+        except Exception as e:
+            logging.error(f"Failed to serve index.html: {str(e)}")
+            return HTMLResponse(content="<h1>Welcome to Legal AI Assistant</h1><p>Service is starting up...</p>")
 
 @app.get("/favicon.ico")
 async def favicon():
