@@ -1,0 +1,20 @@
+[
+  {
+    "tag_name": "entity",
+    "ids_to_tags": {
+      "1": "B-crime",
+      "2": "I-crime",
+      "3": "L-crime",
+      "4": "U-crime",
+      "0": "O"
+    },
+    "tags_to_ids": {
+      "B-crime": 1,
+      "I-crime": 2,
+      "L-crime": 3,
+      "U-crime": 4,
+      "O": 0
+    },
+    "num_tags": 5
+  }
+]

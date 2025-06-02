@@ -1,0 +1,39 @@
+{
+  "lookup": {
+    "rules": {
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"bot_challenge\"}}]": "utter_iamabot",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"bot_challenge\"}}, {\"prev_action\": {\"action_name\": \"utter_iamabot\"}, \"user\": {\"intent\": \"bot_challenge\"}}]": "action_listen",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"out_of_scope\"}}]": "utter_out_of_scope",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"out_of_scope\"}}, {\"prev_action\": {\"action_name\": \"utter_out_of_scope\"}, \"user\": {\"intent\": \"out_of_scope\"}}]": "action_listen",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"confess_crime\"}}]": "action_handle_crime_confession",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"confess_crime\"}}, {\"prev_action\": {\"action_name\": \"action_handle_crime_confession\"}, \"user\": {\"intent\": \"confess_crime\"}}]": "utter_crime_confession",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"confess_crime\"}}, {\"prev_action\": {\"action_name\": \"action_handle_crime_confession\"}, \"user\": {\"intent\": \"confess_crime\"}}, {\"prev_action\": {\"action_name\": \"utter_crime_confession\"}, \"user\": {\"intent\": \"confess_crime\"}}]": "action_query_crime",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"confess_crime\"}}, {\"prev_action\": {\"action_name\": \"action_handle_crime_confession\"}, \"user\": {\"intent\": \"confess_crime\"}}, {\"prev_action\": {\"action_name\": \"utter_crime_confession\"}, \"user\": {\"intent\": \"confess_crime\"}}, {\"prev_action\": {\"action_name\": \"action_query_crime\"}, \"user\": {\"intent\": \"confess_crime\"}}]": "utter_did_that_help",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"confess_crime\"}}, {\"prev_action\": {\"action_name\": \"action_handle_crime_confession\"}, \"user\": {\"intent\": \"confess_crime\"}}, {\"prev_action\": {\"action_name\": \"utter_crime_confession\"}, \"user\": {\"intent\": \"confess_crime\"}}, {\"prev_action\": {\"action_name\": \"action_query_crime\"}, \"user\": {\"intent\": \"confess_crime\"}}, {\"prev_action\": {\"action_name\": \"utter_did_that_help\"}, \"user\": {\"intent\": \"confess_crime\"}}]": "action_listen",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"ask_about_crime\"}}]": "action_query_crime",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"ask_about_crime\"}}, {\"prev_action\": {\"action_name\": \"action_query_crime\"}, \"user\": {\"intent\": \"ask_about_crime\"}}]": "utter_did_that_help",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"ask_about_crime\"}}, {\"prev_action\": {\"action_name\": \"action_query_crime\"}, \"user\": {\"intent\": \"ask_about_crime\"}}, {\"prev_action\": {\"action_name\": \"utter_did_that_help\"}, \"user\": {\"intent\": \"ask_about_crime\"}}]": "action_listen",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"ask_ipc_punishment\"}}]": "action_query_ipc_punishment",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"ask_ipc_punishment\"}}, {\"prev_action\": {\"action_name\": \"action_query_ipc_punishment\"}, \"user\": {\"intent\": \"ask_ipc_punishment\"}}]": "utter_did_that_help",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"ask_ipc_punishment\"}}, {\"prev_action\": {\"action_name\": \"action_query_ipc_punishment\"}, \"user\": {\"intent\": \"ask_ipc_punishment\"}}, {\"prev_action\": {\"action_name\": \"utter_did_that_help\"}, \"user\": {\"intent\": \"ask_ipc_punishment\"}}]": "action_listen",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"goodbye\"}}]": "utter_goodbye",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"goodbye\"}}, {\"prev_action\": {\"action_name\": \"utter_goodbye\"}, \"user\": {\"intent\": \"goodbye\"}}]": "action_listen",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"ask_about_punishment\"}}]": "action_query_crime",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"ask_about_punishment\"}}, {\"prev_action\": {\"action_name\": \"action_query_crime\"}, \"user\": {\"intent\": \"ask_about_punishment\"}}]": "utter_did_that_help",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"ask_about_punishment\"}}, {\"prev_action\": {\"action_name\": \"action_query_crime\"}, \"user\": {\"intent\": \"ask_about_punishment\"}}, {\"prev_action\": {\"action_name\": \"utter_did_that_help\"}, \"user\": {\"intent\": \"ask_about_punishment\"}}]": "action_listen",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"ask_about_ipc\"}}]": "action_query_ipc_section",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"ask_about_ipc\"}}, {\"prev_action\": {\"action_name\": \"action_query_ipc_section\"}, \"user\": {\"intent\": \"ask_about_ipc\"}}]": "utter_did_that_help",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"ask_about_ipc\"}}, {\"prev_action\": {\"action_name\": \"action_query_ipc_section\"}, \"user\": {\"intent\": \"ask_about_ipc\"}}, {\"prev_action\": {\"action_name\": \"utter_did_that_help\"}, \"user\": {\"intent\": \"ask_about_ipc\"}}]": "action_listen"
+    },
+    "rule_only_slots": [],
+    "rule_only_loops": [],
+    "rules_for_loop_unhappy_path": {},
+    "rules_not_in_stories": [
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"goodbye\"}}]",
+      "predicting default action with intent back",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"goodbye\"}}, {\"prev_action\": {\"action_name\": \"utter_goodbye\"}, \"user\": {\"intent\": \"goodbye\"}}]",
+      "predicting default action with intent session_start",
+      "predicting default action with intent restart"
+    ]
+  }
+}
