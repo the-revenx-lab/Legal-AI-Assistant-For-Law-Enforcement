@@ -1,28 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Legal AI Assistant</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 40px;
-            line-height: 1.6;
+            margin: 0;
+            padding: 40px;
+            background-color: #f5f5f5;
         }
         .container {
             max-width: 800px;
             margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         h1 {
             color: #333;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Legal AI Assistant</h1>
-        <p>Welcome to the Legal AI Assistant API. This is the base endpoint for our services.</p>
-        <p>For API documentation, please visit <a href="/docs">/docs</a></p>
-        <p>To check the API health, visit <a href="/health">/health</a></p>
+        <h1>Welcome to Legal AI Assistant</h1>
+        <p>Your intelligent companion for legal assistance and law enforcement support.</p>
+        <a href="/chat" class="button">Start Chat</a>
     </div>
 </body>
 </html> 

@@ -27,10 +27,9 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 # Configure CORS
-ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', '*').split(',')
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -153,20 +152,32 @@ async def root(request: Request):
         return templates.TemplateResponse("index.html", {"request": request})
     except Exception as e:
         logger.error(f"Error serving index page: {str(e)}")
-        # Fallback to direct file reading
-        try:
-            with open(os.path.join(static_dir, "index.html"), "r", encoding='utf-8') as f:
-                return HTMLResponse(content=f.read())
-        except Exception as file_error:
-            logger.error(f"Error reading index.html: {str(file_error)}")
-            return HTMLResponse(
-                content="<h1>Welcome to Legal AI Assistant</h1><p>Service is starting up...</p>"
-            )
+        # Return a basic HTML response
+        return HTMLResponse(
+            content="""
+            <html>
+                <head>
+                    <title>Legal AI Assistant</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; }
+                        h1 { color: #333; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Welcome to Legal AI Assistant</h1>
+                    <p>Service is starting up...</p>
+                </body>
+            </html>
+            """
+        )
 
 @app.get("/favicon.ico")
 async def favicon():
     """Serve favicon"""
-    return FileResponse(os.path.join(static_dir, "favicon.ico"))
+    try:
+        return FileResponse(os.path.join(static_dir, "favicon.ico"))
+    except Exception:
+        return JSONResponse(status_code=404, content={"message": "Favicon not found"})
 
 @app.post("/login")
 async def login(username: str = Form(...), password: str = Form(...)):
@@ -302,6 +313,9 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         chat_db_cur.close()
         chat_db_conn.close()
+
+# For Vercel serverless deployment
+app = app
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))

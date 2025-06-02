@@ -12,23 +12,20 @@
     ],
     "routes": [
         {
-            "src": "/favicon.ico",
-            "dest": "static/favicon.ico"
-        },
-        {
             "src": "/static/(.*)",
-            "dest": "static/$1"
+            "dest": "/static/$1"
         },
         {
-            "src": "/",
-            "dest": "chat.py"
+            "src": "/favicon.ico",
+            "dest": "/static/favicon.ico"
         },
         {
             "src": "/(.*)",
-            "dest": "chat.py"
+            "dest": "/chat.py"
         }
     ],
     "env": {
-        "PYTHONUNBUFFERED": "1"
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONPATH": "."
     }
 } 

@@ -59,4 +59,7 @@ mypy==0.910
 # Documentation
 Sphinx==4.2.0
 sphinx-rtd-theme==0.5.2
-recommonmark==0.7.1 
+recommonmark==0.7.1
+
+# Additional dependencies
+aiofiles==0.7.0 
