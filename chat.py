@@ -112,11 +112,9 @@ async def get_chat_messages(session_id: int):
     conn.close()
     return messages
 
-@app.get("/")
-async def root():
-    with open(os.path.join(static_dir, "index.html"), "r") as f:
-        html_content = f.read()
-    return HTMLResponse(content=html_content)
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/favicon.ico")
 async def favicon():
