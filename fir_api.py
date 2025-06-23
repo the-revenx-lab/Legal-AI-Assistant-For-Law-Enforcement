@@ -42,7 +42,7 @@ class ComplainantDetails(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     parent_name: str = Field(..., min_length=1, max_length=100)
     age: int = Field(..., gt=0, lt=150)
-    gender: str = Field(..., regex='^(Male|Female|Other)$')
+    gender: str = Field(..., pattern='^(Male|Female|Other)$')
     nationality: Optional[str] = Field(None, max_length=50)
     occupation: Optional[str] = Field(None, max_length=100)
     address: str = Field(..., min_length=1)
@@ -54,7 +54,7 @@ class FIRSubmission(BaseModel):
     district: str = Field(..., min_length=1, max_length=100)
     fir_date: date
     complainant: ComplainantDetails
-    info_type: str = Field(..., regex='^(Oral|Written)$')
+    info_type: str = Field(..., pattern='^(Oral|Written)$')
     place_of_occurrence: str = Field(..., min_length=1)
     date_time_of_occurrence: datetime
     accused_details: Optional[str] = None
