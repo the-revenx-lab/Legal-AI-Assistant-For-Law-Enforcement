@@ -75,8 +75,8 @@ chat/
 
 1. **Clone the repository**
    ```sh
-   git clone https://github.com/YOUR_USERNAME/REPO_NAME.git
-   cd REPO_NAME
+   git clone https://github.com/the-revenx-lab/Legal-AI-Assistant-For-Law-Enforcement.git
+   cd Legal-AI-Assistant-For-Law-Enforcement
    ```
 
 2. **Set up Python environment**
