@@ -109,11 +109,6 @@ chat/
 
 ## ▶️ How to Run the Project
 
-**Start the backend API:**
-```sh
-uvicorn fir_api:router --reload
-```
-
 **Start the Rasa action server:**
 ```sh
 rasa run actions
@@ -124,9 +119,9 @@ rasa run actions
 rasa run --enable-api --cors "*"
 ```
 
-**(Optional) Run with Docker Compose:**
+**Run chat.py file**
 ```sh
-docker-compose up --build
+python chat.py
 ```
 
 **Access the web UI:**
