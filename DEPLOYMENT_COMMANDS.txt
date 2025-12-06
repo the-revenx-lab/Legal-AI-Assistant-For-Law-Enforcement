@@ -1,0 +1,97 @@
+# 📋 Copy-Paste Commands for Coolify Deployment
+# Use these exact values when setting up in Coolify
+
+# ============================================
+# MYSQL DATABASE CONFIGURATION
+# ============================================
+Name: legal-ai-mysql
+Image: mysql:8
+Ports Mappings: 3306:3306
+Root Password: 1@yLC&%Dvee*JilV@S03MgH%dEjs0%6z
+Normal User: legal_ai_user
+Normal User Password: !SeG@DZk&4yor3NXusrY1G$#i!b@NTBx
+Initial Database: legal_ai
+
+# ============================================
+# RASA ACTION SERVER CONFIGURATION
+# ============================================
+Name: rasa-actions
+Repository: https://github.com/the-revenx-lab/Legal-AI-Assistant-For-Law-Enforcement.git
+Branch: main
+Dockerfile Path: chat/Dockerfile.actions
+Build Context: chat/
+Port: 5055
+
+Environment Variables:
+DB_HOST=legal-ai-mysql
+DB_USER=legal_ai_user
+DB_PASSWORD=!SeG@DZk&4yor3NXusrY1G$#i!b@NTBx
+DB_NAME=legal_ai
+PYTHONUNBUFFERED=1
+RASA_ACTIONS_PORT=5055
+
+# ============================================
+# RASA SERVER CONFIGURATION
+# ============================================
+Name: rasa
+Repository: https://github.com/the-revenx-lab/Legal-AI-Assistant-For-Law-Enforcement.git
+Branch: main
+Dockerfile Path: chat/Dockerfile.rasa
+Build Context: chat/
+Port: 5005
+
+Environment Variables:
+RASA_ACTION_ENDPOINT=http://rasa-actions:5055/webhook
+DB_HOST=legal-ai-mysql
+DB_USER=legal_ai_user
+DB_PASSWORD=!SeG@DZk&4yor3NXusrY1G$#i!b@NTBx
+DB_NAME=legal_ai
+PYTHONUNBUFFERED=1
+RASA_PORT=5005
+
+# ============================================
+# FASTAPI BACKEND CONFIGURATION
+# ============================================
+Name: fastapi
+Repository: https://github.com/the-revenx-lab/Legal-AI-Assistant-For-Law-Enforcement.git
+Branch: main
+Dockerfile Path: chat/Dockerfile.fastapi
+Build Context: chat/
+Port: 8080
+Enable Public Access: YES (check this!)
+
+Environment Variables:
+DB_HOST=legal-ai-mysql
+DB_USER=legal_ai_user
+DB_PASSWORD=!SeG@DZk&4yor3NXusrY1G$#i!b@NTBx
+DB_NAME=legal_ai
+RASA_SERVER_URL=http://rasa:5005
+PORT=8080
+HOST=0.0.0.0
+ALLOWED_ORIGINS=*
+API_KEY=Hr4vvONi2fGQd7ObjlV0e_yKj4j0LA3gJP8T2fM8M7lINWNc
+PYTHONUNBUFFERED=1
+
+# ============================================
+# SQL FILES TO IMPORT (in order)
+# ============================================
+1. schema.sql
+2. fir_schema.sql
+3. chathistory.sql
+
+# ============================================
+# TEST CREDENTIALS
+# ============================================
+Chat Login:
+Username: admin
+Password: admin123
+
+# ============================================
+# TEST URLS (after deployment)
+# ============================================
+Health: http://your-url:8080/api/health
+Chat: http://your-url:8080/chat
+FIR: http://your-url:8080/fir
+FIR Admin: http://your-url:8080/fir/admin
+IPC Admin: http://your-url:8080/ipc/admin
+
