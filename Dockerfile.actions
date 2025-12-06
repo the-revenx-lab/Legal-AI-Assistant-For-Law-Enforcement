@@ -3,11 +3,12 @@ FROM python:3.8.10-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies (including curl for health checks)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
@@ -19,6 +20,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy actions directory
 COPY actions/ ./actions/
+
+# Copy supporting files (if actions need them)
+COPY config.py .
+COPY db_utils.py .
 
 # Set Python path
 ENV PYTHONPATH=/app
