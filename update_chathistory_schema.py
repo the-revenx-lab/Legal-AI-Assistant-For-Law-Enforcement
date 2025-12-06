@@ -1,27 +1,26 @@
 import mysql.connector
 
-def run_sql_file(cursor, filename):
-    with open(filename, 'r') as f:
+from config import get_db_config
+
+
+def run_sql_file(cursor, filename: str) -> None:
+    with open(filename, "r", encoding="utf-8") as f:
         sql = f.read()
     # Split on semicolon, filter out empty statements
-    statements = [s.strip() for s in sql.split(';') if s.strip()]
+    statements = [s.strip() for s in sql.split(";") if s.strip()]
     for stmt in statements:
         cursor.execute(stmt)
 
-def main():
-    db_config = {
-        'host': 'localhost',
-        'user': 'root',
-        'password': 'pass',
-        'database': 'legal_ai'
-    }
-    conn = mysql.connector.connect(**db_config)
+
+def main() -> None:
+    conn = mysql.connector.connect(**get_db_config())
     cursor = conn.cursor()
-    run_sql_file(cursor, 'chathistory.sql')
+    run_sql_file(cursor, "chathistory.sql")
     conn.commit()
     cursor.close()
     conn.close()
-    print('Chat history tables created/updated successfully!')
+    print("Chat history tables created/updated successfully!")
 
-if __name__ == '__main__':
-    main() 
+
+if __name__ == "__main__":
+    main()

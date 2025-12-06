@@ -149,6 +149,12 @@ nlu:
     - What is the law for [dowry](crime)?
     - What is the law for [sexual harassment](crime)?
     - What is the law for [terrorism](crime)?
+    - What happens if someone [stabs](crime) another person?
+    - What is the crime if a person [stabbed](crime) someone?
+    - What happens if someone [kills](crime) another person?
+    - What is the crime if someone [kills](crime) a person?
+    - What crime is it when a person [kills](crime) someone else?
+    - What is it called when someone [kills](crime) another human being?
 
 - intent: ask_about_punishment
   examples: |
@@ -798,77 +804,122 @@ nlu:
     - IPC ?[0-9]{1,4}[A-Z]*
     - section ?[0-9]{1,4}[A-Z]*
 
-synonyms:
-  - synonym: murder
-    examples: |
-      - murder
-      - killing
-      - homicide
-  - synonym: theft
-    examples: |
-      - theft
-      - stealing
-      - larceny
-  - synonym: robbery
-    examples: |
-      - robbery
-      - armed robbery
-      - hold-up
-  - synonym: assault
-    examples: |
-      - assault
-      - battery
-      - attack
-  - synonym: fraud
-    examples: |
-      - fraud
-      - cheating
-      - deception
-  - synonym: cyber fraud
-    examples: |
-      - cyber fraud
-      - cybercrime
-      - cyber crime
-      - online fraud
-      - internet fraud
-      - digital fraud
-      - computer fraud
-      - electronic fraud
-  - synonym: cyber crime
-    examples: |
-      - cyber crime
-      - cybercrime
-      - online crime
-  - synonym: domestic violence
-    examples: |
-      - domestic violence
-      - domestic abuse
-      - spousal abuse
-  - synonym: kidnapping
-    examples: |
-      - kidnapping
-      - abduction
-      - hostage taking
-  - synonym: rape
-    examples: |
-      - rape
-      - sexual assault
-      - sexual violence
-  - synonym: dowry
-    examples: |
-      - dowry
-      - dowry death
-      - giving dowry
-      - taking dowry
-  - synonym: sexual harassment
-    examples: |
-      - sexual harassment
-      - harassment
-      - eve teasing
-      - unwelcome advances
-  - synonym: terrorism
-    examples: |
-      - terrorism
-      - terror
-      - terrorist act
-      - terror attack
+- synonym: murder
+  examples: |
+    - murder
+    - killing
+    - homicide
+    - kill
+    - kills
+    - killed
+    - kill someone
+    - killed someone
+- synonym: theft
+  examples: |
+    - theft
+    - stealing
+    - larceny
+- synonym: robbery
+  examples: |
+    - robbery
+    - armed robbery
+    - hold-up
+- synonym: assault
+  examples: |
+    - assault
+    - battery
+    - attack
+    - stab
+    - stabbed
+    - stabbing
+    - knife attack
+- synonym: fraud
+  examples: |
+    - fraud
+    - cheating
+    - deception
+- synonym: cyber fraud
+  examples: |
+    - cyber fraud
+    - cybercrime
+    - cyber crime
+    - online fraud
+    - internet fraud
+    - digital fraud
+    - computer fraud
+    - electronic fraud
+- synonym: cyber crime
+  examples: |
+    - cyber crime
+    - cybercrime
+    - online crime
+- synonym: domestic violence
+  examples: |
+    - domestic violence
+    - domestic abuse
+    - spousal abuse
+- synonym: kidnapping
+  examples: |
+    - kidnapping
+    - abduction
+    - hostage taking
+- synonym: rape
+  examples: |
+    - rape
+    - sexual assault
+    - sexual violence
+- synonym: dowry
+  examples: |
+    - dowry
+    - dowry death
+    - giving dowry
+    - taking dowry
+- synonym: sexual harassment
+  examples: |
+    - sexual harassment
+    - harassment
+    - eve teasing
+    - unwelcome advances
+- synonym: terrorism
+  examples: |
+    - terrorism
+    - terror
+    - terrorist act
+    - terror attack
+
+- intent: describe_case
+  examples: |
+    - A man broke into a house at night and stole jewellery and cash.
+    - Someone entered my shop and took money from the cash drawer.
+    - A group of people attacked a person with knives and he was badly injured.
+    - A husband has been beating his wife regularly and threatening her.
+    - A person sent obscene messages and pictures to a woman over the internet.
+    - My friend was forced to give dowry and her in-laws harass her for more money.
+    - A stranger tried to kidnap a child from outside the school.
+    - Someone threatened me with a weapon and took my mobile phone.
+    - There was a bomb blast in a crowded market killing many people.
+    - A person created fake online profiles to cheat people and take money from them.
+
+- intent: smalltalk_how_are_you
+  examples: |
+    - how are you?
+    - how r u
+    - how's it going
+    - how are you doing
+    - how do you do
+    - what's up
+    - how is everything
+    - how are things
+
+- intent: smalltalk_ack
+  examples: |
+    - ok
+    - okay
+    - great
+    - nice
+    - cool
+    - thanks
+    - thank you
+    - got it
+    - understood
+    - makes sense

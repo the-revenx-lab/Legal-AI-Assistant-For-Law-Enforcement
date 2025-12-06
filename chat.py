@@ -11,6 +11,7 @@ from api_client import RasaClient
 from fastapi import FastAPI 
 from fir_api import router as fir_router
 from fastapi.middleware.cors import CORSMiddleware
+from health_check import router as health_router
 import mysql.connector
 import urllib.parse
 import logging
@@ -41,6 +42,9 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 # Mount FIR API routes under /api
 app.include_router(fir_router, prefix="/api")
 
+# Mount health check endpoint
+app.include_router(health_router, prefix="/api")
+
 # Templates
 templates = Jinja2Templates(directory=static_dir)
 
@@ -54,14 +58,11 @@ users = {
 active_connections: Dict[WebSocket, str] = {}
 
 # --- Chat History Database Setup (MySQL) ---
-CHAT_DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'pass',
-    'database': 'legal_ai'
-}
 def get_chat_db():
-    conn = mysql.connector.connect(**CHAT_DB_CONFIG)
+    """Get chat history database connection using config"""
+    from config import get_db_config
+    db_config = get_db_config()
+    conn = mysql.connector.connect(**db_config)
     return conn
 
 @app.get('/api/chat/history')

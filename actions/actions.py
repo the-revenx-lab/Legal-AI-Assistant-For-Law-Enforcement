@@ -6,10 +6,22 @@ import mysql.connector
 from mysql.connector import Error
 import logging
 import re
+import os
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Database configuration from environment variables
+def get_db_config():
+    """Get database configuration from environment variables with fallback defaults"""
+    return {
+        "host": os.environ.get("DB_HOST", "localhost"),
+        "user": os.environ.get("DB_USER", "root"),
+        "password": os.environ.get("DB_PASSWORD", "pass"),
+        "database": os.environ.get("DB_NAME", "legal_ai"),
+        "autocommit": True,
+    }
 
 class ActionQueryIPCSection(Action):
     def name(self) -> Text:
@@ -42,12 +54,8 @@ class ActionQueryIPCSection(Action):
                 section_number = ipc_section.strip().upper()
             
             # Connect to MySQL database
-            connection = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="pass",
-                database="legal_ai"
-            )
+            db_config = get_db_config()
+            connection = mysql.connector.connect(**db_config)
             
             if connection.is_connected():
                 cursor = connection.cursor(dictionary=True)
@@ -96,37 +104,79 @@ class ActionQueryCrime(Action):
         
         # Check if this is a question about a crime
         question_patterns = [
-            'what is', 'tell me about', 'can you explain', 'what does',
-            'i want to know', 'i need information', 'can you tell me',
-            'i would like to know', 'please explain'
+            'what is',
+            'tell me about',
+            'can you explain',
+            'what does',
+            'i want to know',
+            'i need information',
+            'can you tell me',
+            'i would like to know',
+            'please explain',
+            'what if',
+            'what happens if',
         ]
-        
-        is_question = any(pattern in latest_message for pattern in question_patterns)
+
+        crime_trigger_verbs = [
+            'kill',
+            'kills',
+            'killed',
+            'killing',
+            'murder',
+            'stab',
+            'stabbed',
+            'stabbing',
+            'steal',
+            'stole',
+            'stolen',
+            'stealing',
+            'rob',
+            'robbed',
+            'robbing',
+            'robbery',
+        ]
+
+        # Treat as a crime question if it looks like a question OR clearly mentions crime verbs
+        is_question = (
+            any(pattern in latest_message for pattern in question_patterns)
+            or crime_entity is not None
+            or any(v in latest_message for v in crime_trigger_verbs)
+        )
         
         if is_question:
             # Handle as a normal crime query
             try:
                 # Connect to MySQL database
-                connection = mysql.connector.connect(
-                    host="localhost",
-                    user="root",
-                    password="pass",
-                    database="legal_ai"
-                )
+                db_config = get_db_config()
+                connection = mysql.connector.connect(**db_config)
                 
                 if connection.is_connected():
                     cursor = connection.cursor(dictionary=True)
                     
-                    # If no crime entity found, check for cyber crime terms
+                    # If no crime entity found, attempt to infer crime from text
                     if not crime_entity:
+                        # First, check for cyber crime terms
                         cyber_terms = ['cyber', 'online', 'internet', 'digital', 'computer', 'electronic']
                         if any(term in latest_message for term in cyber_terms):
                             crime_entity = 'cyber fraud'
-                    
+
                     if not crime_entity:
-                        dispatcher.utter_message(text="I couldn't identify which crime you're asking about. Please specify a crime.")
+                        # Map common verb-based descriptions to known crimes
+                        if any(term in latest_message for term in ['kill', 'kills', 'killed', 'killing', 'murder']):
+                            crime_entity = 'murder'
+                        elif any(term in latest_message for term in ['stab', 'stabbed', 'stabbing', 'knife', 'knifed']):
+                            crime_entity = 'assault'
+                        elif any(term in latest_message for term in ['steal', 'stole', 'stolen', 'stealing']):
+                            crime_entity = 'theft'
+                        elif any(term in latest_message for term in ['rob', 'robbed', 'robbing', 'robbery']):
+                            crime_entity = 'robbery'
+
+                    if not crime_entity:
+                        dispatcher.utter_message(
+                            text="I couldn't identify which crime you're asking about. Please specify a crime."
+                        )
                         return []
-                    
+
                     # Normalize crime name
                     crime_name = crime_entity.lower().strip()
                     
@@ -332,12 +382,8 @@ class ActionQueryCrime(Action):
             # Then try to get and show crime information
             try:
                 # Connect to MySQL database
-                connection = mysql.connector.connect(
-                    host="localhost",
-                    user="root",
-                    password="pass",
-                    database="legal_ai"
-                )
+                db_config = get_db_config()
+                connection = mysql.connector.connect(**db_config)
                 
                 if connection.is_connected():
                     cursor = connection.cursor(dictionary=True)
@@ -454,12 +500,8 @@ class ActionQueryIPCPunishment(Action):
                 return []
 
             # Connect to MySQL database
-            connection = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="pass",
-                database="legal_ai"
-            )
+            db_config = get_db_config()
+            connection = mysql.connector.connect(**db_config)
 
             if connection.is_connected():
                 cursor = connection.cursor(dictionary=True)

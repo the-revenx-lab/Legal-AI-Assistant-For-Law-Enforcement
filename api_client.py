@@ -6,8 +6,9 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 class RasaClient:
-    def __init__(self, base_url="http://localhost:5005"):
-        self.base_url = base_url
+    def __init__(self, base_url=None):
+        import os
+        self.base_url = base_url or os.environ.get("RASA_SERVER_URL", "http://localhost:5005")
         self.sessions = {}
         
         # Configure retry strategy
@@ -44,24 +45,62 @@ class RasaClient:
             
             # Process the response
             data = response.json()
+
+            # If Rasa returns an empty list (no messages), provide a graceful fallback.
+            # Special-case common greetings so the UI always shows a friendly reply.
             if not data:
-                return [{"type": "error", "text": "No response received from the server."}]
-            
+                lower_msg = (message or "").strip().lower()
+                if any(greet in lower_msg for greet in ["hi", "hello", "hey", "hii", "hiya"]):
+                    return [
+                        {
+                            "type": "bot_message",
+                            "text": (
+                                "Hello! I'm your Legal AI Assistant. "
+                                "How can I help you today with IPC sections, crimes, or FIR information?"
+                            ),
+                        }
+                    ]
+
+                return [
+                    {
+                        "type": "bot_message",
+                        "text": (
+                            "I received your message but couldn't generate a reply. "
+                            "Please try asking about an IPC section, a crime, or describe the case in more detail."
+                        ),
+                    }
+                ]
+
             # Format the response
             formatted_response = []
             for item in data:
                 if "text" in item:
-                    formatted_response.append({
-                        "type": "bot_message",
-                        "text": item["text"]
-                    })
+                    formatted_response.append(
+                        {
+                            "type": "bot_message",
+                            "text": item["text"],
+                        }
+                    )
                 elif "error" in item:
-                    formatted_response.append({
-                        "type": "error",
-                        "text": item["error"]
-                    })
-            
-            return formatted_response if formatted_response else [{"type": "error", "text": "No valid response received."}]
+                    formatted_response.append(
+                        {
+                            "type": "error",
+                            "text": item["error"],
+                        }
+                    )
+
+            if not formatted_response:
+                formatted_response.append(
+                    {
+                        "type": "bot_message",
+                        "text": (
+                            "I'm not sure how to respond to that. "
+                            "You can ask about IPC sections, crimes, punishments, or describe the incident."
+                        ),
+                    }
+                )
+
+            return formatted_response
             
         except requests.exceptions.ConnectionError as e:
             print(f"Connection error: Could not connect to Rasa server at {self.base_url}")

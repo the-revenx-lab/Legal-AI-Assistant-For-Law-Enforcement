@@ -2,10 +2,25 @@ version: "3.1"
 
 rules:
 
+- rule: Say greet anytime the user says hello
+  steps:
+  - intent: greet
+  - action: utter_greet
+
 - rule: Say goodbye anytime the user says goodbye
   steps:
   - intent: goodbye
   - action: utter_goodbye
+
+- rule: Respond to how are you
+  steps:
+  - intent: smalltalk_how_are_you
+  - action: utter_smalltalk_how_are_you
+
+- rule: Respond to acknowledgement
+  steps:
+  - intent: smalltalk_ack
+  - action: utter_smalltalk_ack
 
 - rule: Say 'I am a bot' anytime the user challenges
   steps:
@@ -43,3 +58,8 @@ rules:
   steps:
   - intent: ask_ipc_punishment
   - action: action_query_ipc_punishment
+
+- rule: Respond to describe_case with IPC suggestions
+  steps:
+  - intent: describe_case
+  - action: action_suggest_ipc_from_description

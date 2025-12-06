@@ -1,12 +1,30 @@
-from fastapi import FastAPI
-from datetime import datetime
+"""
+Health check endpoint for FastAPI
+"""
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse
+import mysql.connector
+from config import get_db_config
 
-app = FastAPI()
+router = APIRouter()
 
-@app.get("/health")
+@router.get("/health")
 async def health_check():
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "service": "legal-ai-assistant"
-    } 
+    """Health check endpoint"""
+    try:
+        # Check database connection
+        db_config = get_db_config()
+        conn = mysql.connector.connect(**db_config)
+        if conn.is_connected():
+            conn.close()
+            db_status = "connected"
+        else:
+            db_status = "disconnected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+    
+    return JSONResponse({
+        "status": "healthy" if db_status == "connected" else "unhealthy",
+        "database": db_status,
+        "service": "legal_ai_fastapi"
+    })

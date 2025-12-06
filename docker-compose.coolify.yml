@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: legal_ai_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-legal_ai_root_pass}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-legal_ai}
+      MYSQL_USER: ${MYSQL_USER:-legal_ai_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-legal_ai_pass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./fir_schema.sql:/docker-entrypoint-initdb.d/02-fir_schema.sql:ro
+      - ./chathistory.sql:/docker-entrypoint-initdb.d/03-chathistory.sql:ro
+    networks:
+      - legal_ai_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Rasa Action Server
+  rasa-actions:
+    build:
+      context: .
+      dockerfile: Dockerfile.actions
+    container_name: legal_ai_actions
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_USER: ${MYSQL_USER:-legal_ai_user}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-legal_ai_pass}
+      DB_NAME: ${MYSQL_DATABASE:-legal_ai}
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "5055:5055"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - legal_ai_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5055/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Rasa Server
+  rasa:
+    build:
+      context: .
+      dockerfile: Dockerfile.rasa
+    container_name: legal_ai_rasa
+    restart: unless-stopped
+    environment:
+      RASA_ACTION_ENDPOINT: http://rasa-actions:5055/webhook
+      DB_HOST: mysql
+      DB_USER: ${MYSQL_USER:-legal_ai_user}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-legal_ai_pass}
+      DB_NAME: ${MYSQL_DATABASE:-legal_ai}
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "5005:5005"
+    depends_on:
+      rasa-actions:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    networks:
+      - legal_ai_network
+    volumes:
+      - rasa_models:/app/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # FastAPI Backend
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.fastapi
+    container_name: legal_ai_fastapi
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_USER: ${MYSQL_USER:-legal_ai_user}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-legal_ai_pass}
+      DB_NAME: ${MYSQL_DATABASE:-legal_ai}
+      RASA_SERVER_URL: http://rasa:5005
+      PORT: 8080
+      HOST: 0.0.0.0
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      API_KEY: ${API_KEY:-changeme}
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "8080:8080"
+    depends_on:
+      rasa:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    networks:
+      - legal_ai_network
+    volumes:
+      - ./static:/app/static:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # phpMyAdmin (Optional - for database management)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: legal_ai_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: ${MYSQL_USER:-legal_ai_user}
+      PMA_PASSWORD: ${MYSQL_PASSWORD:-legal_ai_pass}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-legal_ai_root_pass}
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    networks:
+      - legal_ai_network
+
+networks:
+  legal_ai_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  rasa_models:
+    driver: local
+

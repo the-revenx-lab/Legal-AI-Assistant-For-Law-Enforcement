@@ -77,3 +77,8 @@ stories:
   - action: action_handle_crime_confession
   - action: utter_crime_confession
   - action: action_query_crime
+
+- story: describe case and suggest ipc
+  steps:
+  - intent: describe_case
+  - action: action_suggest_ipc_from_description

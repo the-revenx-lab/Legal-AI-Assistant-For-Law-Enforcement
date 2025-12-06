@@ -80,6 +80,7 @@ class IPCSectionUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 def get_db_connection():
+    """Get database connection using config"""
     try:
         config = get_db_config()
         connection = mysql.connector.connect(**config)

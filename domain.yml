@@ -14,6 +14,11 @@ intents:
   - ask_about_ipc
   - ask_ipc_punishment
   - confess_crime
+  # User narrates an incident and wants case classification / IPC suggestions
+  - describe_case
+  # Light small-talk and acknowledgements
+  - smalltalk_how_are_you
+  - smalltalk_ack
 
 entities:
   - crime
@@ -74,6 +79,14 @@ responses:
   - text: "I can only help with questions about IPC sections and crimes. Please ask me something related to these areas."
   - text: "My expertise is limited to Indian criminal law. Could you please ask me something about IPC sections or crimes?"
 
+  utter_smalltalk_how_are_you:
+  - text: "I'm just code, but I'm running smoothly and ready to help with legal questions. How can I assist you today?"
+  - text: "I'm functioning perfectly and ready to answer your legal queries. Would you like to ask about an IPC section, a crime, or an FIR?"
+
+  utter_smalltalk_ack:
+  - text: "Glad that helped. Would you like to ask about an IPC section, a specific crime, or an FIR?"
+  - text: "You're welcome. What would you like to explore next—IPC sections, crimes, or FIR details?"
+
   utter_crime_confession:
   - text: "I notice you're mentioning a crime. If you have committed a crime or are planning to commit one, I strongly advise you to:\n\n1. Contact law enforcement immediately\n2. Seek legal counsel\n3. If you're in immediate danger or experiencing a crisis, please call emergency services\n\nThis is an AI assistant for legal information only. I cannot provide legal advice or handle actual crime reports. For any real legal matters, please consult with law enforcement and legal professionals."
   - text: "I understand you're discussing a potential crime. I must emphasize that I'm an informational AI assistant and cannot provide legal advice or assistance with criminal activities. If you're involved in a crime, please:\n\n1. Contact law enforcement immediately\n2. Seek legal counsel\n3. Call emergency services if in immediate danger\n\nThis is an AI assistant for legal information only. I cannot handle actual crime reports."
@@ -84,6 +97,7 @@ actions:
   - action_query_ipc_section
   - action_query_ipc_punishment
   - action_handle_crime_confession
+  - action_suggest_ipc_from_description
 
 session_config:
   session_expiration_time: 60

@@ -1,0 +1,46 @@
+# Dockerfile for Rasa Server
+FROM python:3.8.10-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy Rasa configuration files
+COPY domain.yml .
+COPY endpoints.yml .
+COPY credentials.yml .
+COPY config.yml .
+COPY rasa/config.yml ./rasa/config.yml
+
+# Copy training data
+COPY data/ ./data/
+COPY rasa_data/ ./rasa_data/
+
+# Copy trained models (if available)
+COPY models/ ./models/
+
+# Create models directory if it doesn't exist
+RUN mkdir -p models
+
+# Expose Rasa port
+EXPOSE 5005
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV RASA_PORT=5005
+
+# Default command - can be overridden in docker-compose
+CMD ["rasa", "run", "--enable-api", "--cors", "*", "--port", "5005"]
+
