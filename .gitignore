@@ -1,7 +1,6 @@
-# Virtual Environment
-venv/
-env/
-ENV/
+# Ignore sensitive credential files
+DEPLOYMENT_CREDENTIALS.txt
+COOLIFY_ENV_VARS_WITH_CREDENTIALS.txt
 
 # Python
 __pycache__/
@@ -9,75 +8,33 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+venv/
+env/
+ENV/
 
-# IDEs and editors
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# Logs and databases
-*.log
-*.sqlite3
-*.db
-
-# Environment variables
-.env
-
-# RASA specific
-models/
+# Rasa
+models/*.tar.gz
 .rasa/
 
-# Operating System
-.DS_Store
-Thumbs.db
+# Database
+*.db
+*.sqlite
+*.sqlite3
 
-# Test coverage
-.coverage
-htmlcov/
-.pytest_cache/
+# Logs
+*.log
+chat.log
 
-# Documentation builds
-docs/_build/
+# Environment
+.env
+.env.local
 
-# Node modules (if any)
-node_modules/
-
-# Compiled files
-*.pyc
-*.pyo
-*.pyd
-*.so
-*.dll
-*.dylib
-
-# Local development settings
-local_settings.py
-
-# Media files
-media/
-uploads/
-
-# Temporary files
-*.tmp
-*.temp
+# IDE
+.vscode/
+.idea/
 *.swp
 *.swo
-*~ 
-.vercel
+
+# OS
+.DS_Store
+Thumbs.db
