@@ -1,0 +1,55 @@
+# Environment Variables for Coolify Deployment
+# Copy these into Coolify's environment variables section for each service
+
+# ============================================
+# MySQL Database (Set in MySQL service)
+# ============================================
+# Configure these in the MySQL database service settings:
+# - Root Password: [Generate and save]
+# - User: legal_ai_user
+# - Password: [Generate and save]
+# - Database: legal_ai
+
+# ============================================
+# Rasa Action Server Environment Variables
+# ============================================
+DB_HOST=legal-ai-mysql
+DB_USER=legal_ai_user
+DB_PASSWORD=<your_mysql_app_password>
+DB_NAME=legal_ai
+PYTHONUNBUFFERED=1
+RASA_ACTIONS_PORT=5055
+
+# ============================================
+# Rasa Server Environment Variables
+# ============================================
+RASA_ACTION_ENDPOINT=http://rasa-actions:5055/webhook
+DB_HOST=legal-ai-mysql
+DB_USER=legal_ai_user
+DB_PASSWORD=<your_mysql_app_password>
+DB_NAME=legal_ai
+PYTHONUNBUFFERED=1
+RASA_PORT=5005
+
+# ============================================
+# FastAPI Backend Environment Variables
+# ============================================
+DB_HOST=legal-ai-mysql
+DB_USER=legal_ai_user
+DB_PASSWORD=<your_mysql_app_password>
+DB_NAME=legal_ai
+RASA_SERVER_URL=http://rasa:5005
+PORT=8080
+HOST=0.0.0.0
+ALLOWED_ORIGINS=*
+API_KEY=<generate_secure_api_key>
+PYTHONUNBUFFERED=1
+
+# ============================================
+# Instructions:
+# ============================================
+# 1. Replace <your_mysql_app_password> with the password you set for legal_ai_user
+# 2. Replace <generate_secure_api_key> with a secure random string
+# 3. Copy the relevant section for each service into Coolify
+# 4. Make sure service names match exactly (legal-ai-mysql, rasa-actions, rasa)
+
